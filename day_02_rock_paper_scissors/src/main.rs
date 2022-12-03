@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs::read_to_string};
+use std::fs::read_to_string;
 
 type ShapeScore = u8;
 
@@ -30,6 +30,11 @@ struct Move {
     choice: Choice,
 }
 
+enum Strategy {
+    MoveValue,
+    Outcome,
+}
+
 fn compare(opponent_move: Move, player_move: &Move) -> Outcome {
     match (opponent_move.choice, &player_move.choice) {
         (x, &y) if x == y => TIE,
@@ -54,78 +59,86 @@ fn test_compare() {
         compare(Move { choice: PAPER }, &Move { choice: SCISSORS }),
         WIN
     );
-    assert_eq!(compare(Move { choice: PAPER }, &Move { choice: ROCK }), LOSS);
-    assert_eq!(compare(Move { choice: PAPER }, &Move { choice: PAPER }), TIE);
+    assert_eq!(
+        compare(Move { choice: PAPER }, &Move { choice: ROCK }),
+        LOSS
+    );
+    assert_eq!(
+        compare(Move { choice: PAPER }, &Move { choice: PAPER }),
+        TIE
+    );
 }
 
 fn score(opponent_move: Move, player_move: &Move) -> u8 {
     let a = compare(opponent_move, player_move);
     let b = get_choice_shape_score(&player_move.choice);
-    println!("==== Adding {:?} {:?}  ====", a, b);
     a + b
 }
 
 #[test]
 fn test_score() {
-    println!("===== YO Yo ====");
     assert_eq!(score(Move { choice: ROCK }, &Move { choice: PAPER }), 8);
-    /*    assert_eq!(compare(Move{ choice: ROCK}, Move { choice: SCISSORS }), LOSS);
-    assert_eq!(compare(Move{ choice: ROCK}, Move { choice: ROCK }), TIE);
-
-    assert_eq!(compare(Move{ choice: PAPER}, Move { choice: SCISSORS }), WIN);
-    assert_eq!(compare(Move{ choice: PAPER}, Move { choice: ROCK }), LOSS);
-    assert_eq!(compare(Move{ choice: PAPER}, Move { choice: PAPER }), TIE);
-     */
 }
 
-fn parse_moves(line:&str) -> (Move, Move) {
+fn parse_moves(line: &str, strategy: Strategy) -> (Move, Move) {
     let mut parts = line.split(" ");
-    /*if parts.count() != 2 {
-        panic!("Unexpected line format for {:?}", line);
-    }*/
-    println!("Looking at parts {:?}", parts);
-
-    println!("Looking at parts {:?}", parts);
-
 
     let opp = match parts.next() {
         Some("A") => ROCK,
         Some("B") => PAPER,
         Some("C") => SCISSORS,
-        _ => panic!("Malformed input")
+        _ => panic!("Malformed input"),
     };
-    let my = match parts.next() {
-        Some("X") => ROCK,
-        Some("Y") => PAPER,
-        Some("Z") => SCISSORS,
-        _ => panic!("Malformed input")
+    let my = match strategy {
+        Strategy::MoveValue => match parts.next() {
+            Some("X") => ROCK,
+            Some("Y") => PAPER,
+            Some("Z") => SCISSORS,
+            _ => panic!("Malformed input"),
+        },
+        Strategy::Outcome => match parts.next() {
+            Some("X") => move_by_outcome(opp, LOSS),
+            Some("Y") => move_by_outcome(opp, TIE),
+            Some("Z") => move_by_outcome(opp, WIN),
+            _ => panic!("Malformed input"),
+        },
     };
+
     (Move { choice: opp }, Move { choice: my })
 }
 
+fn move_by_outcome(opponent_choice: Choice, desired_outcome: Outcome) -> Choice {
+    match (opponent_choice, desired_outcome) {
+        (_, TIE) => opponent_choice,
+        (ROCK, LOSS) => SCISSORS,
+        (PAPER, LOSS) => ROCK,
+        (SCISSORS, LOSS) => PAPER,
+        (ROCK, WIN) => PAPER,
+        (PAPER, WIN) => SCISSORS,
+        (SCISSORS, WIN) => ROCK,
+        _ => panic!("Unknown state {:?} {:?}", opponent_choice, desired_outcome),
+    }
+}
+
 fn main() {
-    let mut opponentCodes = HashMap::new();
-    opponentCodes.insert(String::from("A"), ROCK);
-    opponentCodes.insert(String::from("B"), PAPER);
-    opponentCodes.insert(String::from("C"), SCISSORS);
-
-    let mut playerCodes = HashMap::new();
-    playerCodes.insert(String::from("X"), ROCK);
-    playerCodes.insert(String::from("Y"), PAPER);
-    playerCodes.insert(String::from("Z"), SCISSORS);
-
-    let mut total: u64 = 0;
+    let mut part_1_total: u64 = 0;
+    let mut part_2_total: u64 = 0;
     for line in read_to_string("src/input.txt")
         .expect("Unable to read src/input.txt file")
-        .split("\n") {
-            if line.len() >= 3 {
-              let (opp_move, my_move) = parse_moves(line);
-              total = total + score(opp_move, &my_move) as u64;
-            } else {
-                println!("End of the line");
-                println!("Total: {:?}", total);
-            }
-    }
+        .split("\n")
+    {
+        if line.len() >= 3 {
+            let (opp_move, part_1_move) = parse_moves(line, Strategy::MoveValue);
+            part_1_total = part_1_total + score(opp_move, &part_1_move) as u64;
+            let (opp_move, part_2_move) = parse_moves(line, Strategy::Outcome);
+            part_2_total = part_2_total + score(opp_move, &part_2_move) as u64;
+        } else {
+            // end of the input
+            assert_eq!(part_1_total, 9759);
+            println!("Answer 1 Total: {:?}", part_1_total);
 
-    println!("Hello, world!");
+            assert_eq!(part_2_total, 12429);
+            println!("Answer 2 Total: {:?}", part_2_total);
+        }
+    }
 }
