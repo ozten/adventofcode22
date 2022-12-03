@@ -1,15 +1,16 @@
-use std::{fs::read_to_string, collections::HashMap};
-
-
+use std::{
+    collections::{HashMap, HashSet},
+    fs::read_to_string,
+};
 
 fn priority(character: char) -> u32 {
-  // can we use character range in match?
-  let code_point = character as u32;
-  match code_point {
-    65..=90 => code_point - 38,
-    97..=122 => code_point - 96,
-    _ => panic!("Unexpected character for priority {:?}", character)
-  }
+    // can we use character range in match?
+    let code_point = character as u32;
+    match code_point {
+        65..=90 => code_point - 38,
+        97..=122 => code_point - 96,
+        _ => panic!("Unexpected character for priority {:?}", character),
+    }
 }
 
 #[test]
@@ -20,14 +21,36 @@ fn test_priority() {
     assert_eq!(priority('Z'), 52);
 }
 
+fn detect_badge_type(sack_groups: &Vec<&str>) -> char {
+    let mut uniq_sack_groups: Vec<HashSet<char>> = Vec::new();
+    for sack in sack_groups {
+        let mut uniq_chars = HashSet::new();
+
+        for char in sack.chars() {
+            uniq_chars.insert(char);
+        }
+        uniq_sack_groups.push(uniq_chars.clone());
+    }
+    let mut sack_iter = uniq_sack_groups.iter();
+    let a = sack_iter.next().unwrap();
+    let b = sack_iter.next().unwrap();
+    let c = sack_iter.next().unwrap();
+
+    // Which item_type is in all three Rucksacks a, b, and c?
+    let mut a_b_common_items = a.intersection(&b);
+    *a_b_common_items.find(|item_type| c.contains(item_type)).unwrap()
+}
+
 fn main() {
     let mut total = 0;
+    // Store rucksacks in groups of three
+    let mut sack_groups: Vec<&str> = Vec::new();
+    let mut badge_priorities = 0;
+
     for line in read_to_string("src/input.txt")
-    .expect("Unable to read src/input.txt file")
-    .split("\n") {
-
-        println!("=== {:?} ====", line);
-
+        .expect("Unable to read src/input.txt file")
+        .split("\n")
+    {
         let mut idx = 0;
         let length = line.len();
         let midpoint = length / 2;
@@ -40,17 +63,14 @@ fn main() {
         }
 
         loop {
-            // println!("Accessing {idx} of midpooint={midpoint} length={length}");
             let current_char = chars.nth(0).unwrap();
-            // println!("{idx}: {current_char} {:?}", chars);
             if idx < midpoint {
                 items_seen.insert(current_char, true);
             } else {
                 match items_seen.get(&current_char) {
                     Some(_) => {
-                        println!("Match! found {current_char}");
-                        errors.insert(current_char, true);                        
-                    },
+                        errors.insert(current_char, true);
+                    }
                     None => {}
                 }
             }
@@ -59,22 +79,22 @@ fn main() {
                 break;
             }
         }
-        // read first half of the line
-        // read second half of the line
-        // find character that is common to both
-        // take the character code of the letter 
-        // sum them across all lines
-        // println!("{}", line);
 
         for bad_item in errors.keys() {
             total += priority(*bad_item);
         }
-        
-    }
 
-    let exp: &str = "vJrwpWtwJgWrhcsFMMfFFhFp";
-    println!("Length of {exp} is {:?}", exp.len());
-    println!("{:?}", priority(exp.chars().nth(0).unwrap()));
+        // Part 2
+        sack_groups.push(line);
+        if sack_groups.len() == 3 {
+            let badge_type = detect_badge_type(&sack_groups);
+            badge_priorities += priority(badge_type);
+            sack_groups.clear();
+        }
+    }
     println!("Total {total}");
     assert_eq!(total, 7446);
+
+    println!("Part 2 Total {badge_priorities}");
+    assert_eq!(badge_priorities, 2646);
 }
