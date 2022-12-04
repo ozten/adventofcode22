@@ -14,8 +14,9 @@ fn parse_range(section: &str) -> RangeInclusive<usize> {
     }
 }
 
-fn overlap(lines: String) -> usize {
-    let mut count = 0;
+fn overlap(lines: String) -> (usize, usize) {
+    let mut full_overlap_count = 0;
+    let mut partial_overlap_count = 0;
     for line in lines.split("\n") {
         if line.is_empty() {
             break;
@@ -27,21 +28,28 @@ fn overlap(lines: String) -> usize {
         if (left.contains(&right.start()) && left.contains(&right.end()))
             || (right.contains(&left.start()) && right.contains(&left.end()))
         {
-            count += 1;
+            partial_overlap_count += 1;
+            full_overlap_count += 1;
+        } else if left.contains(&right.start())
+            || left.contains(&right.end())
+            || right.contains(&left.start())
+            || right.contains(&left.end())
+        {
+            partial_overlap_count += 1;
         }
     }
-    count
+    (full_overlap_count, partial_overlap_count)
 }
 
 #[test]
 fn test_overlap() -> Result<(), Box<dyn Error>> {
-    assert_eq!(overlap(read_to_string("src/test_input.txt")?), 2);
+    assert_eq!(overlap(read_to_string("src/test_input.txt")?), (2, 4));
     Ok(())
 }
 
 #[test]
 fn test_edge_cases_overlap() -> Result<(), Box<dyn Error>> {
-    assert_eq!(overlap(read_to_string("src/edge_case_input.txt")?), 1);
+    assert_eq!(overlap(read_to_string("src/edge_case_input.txt")?), (1, 1));
     Ok(())
 }
 
@@ -50,8 +58,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         Ok(lines) => overlap(lines),
         Err(error) => panic!("Unable to open src/input.txt {:?}", error),
     };
-    println!("Answer {count}");
-    assert_eq!(count, 644);
+    let (full, partial) = count;
+
+    println!("Answer #1 {full}");
+    println!("Answer #2 {partial}");
+    assert_eq!(count, (644, 926));
 
     Ok(())
 }
