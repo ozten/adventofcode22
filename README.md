@@ -10,3 +10,4 @@ Please submit a PR to add your repo.
 * this repo ([ozten](https://github.com/ozten/adventofcode22))
 * [Rosalita](https://github.com/Rosalita/advent-of-code-2022)
 * [silwol](https://salsa.debian.org/silwol/aoc2022/-/tree/main)
+* [ericthomasca](https://github.com/ericthomasca/adventofcode2022)
