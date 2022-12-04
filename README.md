@@ -12,3 +12,4 @@ Please submit a PR to add your repo.
 * [silwol](https://salsa.debian.org/silwol/aoc2022/-/tree/main)
 * [ericthomasca](https://github.com/ericthomasca/adventofcode2022)
 * [neoeinstein](https://github.com/neoeinstein/aoc-2022)
+* [Dani Sancas](https://github.com/DaniSancas/advent-of-code-2022)
