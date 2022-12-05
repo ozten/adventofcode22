@@ -46,9 +46,6 @@ fn parse_instruction_line(line: &str, instructions: &mut Vec<Instructions>) {
     let from = parts.get(3);
     let to = parts.get(5);
 
-    /*let amount = line.get(5..6);
-    let from = line.get(12..13);
-    let to = line.get(17..18);*/
     match (amount, from, to) {
         (Some(amount), Some(from), Some(to)) => instructions.push(Instructions {
             amount: amount.parse().unwrap(),
