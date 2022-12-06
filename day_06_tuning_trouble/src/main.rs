@@ -39,11 +39,41 @@ fn test_detect_signal() {
         11
     );
 }
+
+#[test]
+fn test_detect_message() {
+    assert_eq!(
+        detect_signal(String::from("mjqjpqmgbljsphdztnvjfqwrcgsmlb"), 14),
+        19
+    );
+    assert_eq!(
+        detect_signal(String::from("bvwbjplbgvbhsrlpgdmjqwftvncz"), 14),
+        23
+    );
+    assert_eq!(
+        detect_signal(String::from("nppdvjthqldpwncqszvftbrmjlhg"), 14),
+        23
+    );
+    assert_eq!(
+        detect_signal(String::from("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg"), 14),
+        29
+    );
+    assert_eq!(
+        detect_signal(String::from("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"), 14),
+        26
+    );
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let answer = detect_signal(read_to_string("src/input.txt")?, 4);
     println!("Answer Part#1 {answer}");
 
     assert_eq!(answer, 1850);
+
+    let answer = detect_signal(read_to_string("src/input.txt")?, 14);
+    println!("Answer Part#2 {answer}");
+
+    assert_eq!(answer, 2823);
 
     Ok(())
 }
