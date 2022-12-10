@@ -22,50 +22,43 @@ impl CathodeRayTube {
             CpuInstructions::Noop { cost } => cost.clone(),
         };
         let mut sum_strength = 0;
+        let part_1 = false;
 
         loop {
-            println!(
-                "Starting cycle {} CPU X={} current instruction={:?} instruction cost={:?}",
-                self.cycle, self.cpu.x, &current_instr, &current_instr_cost
-            );
+            let col = (self.cycle as isize - 1) % 40;
+            if self.cpu.x as isize - 1 <= col && col <= self.cpu.x as isize + 1 {
+                print!("#");
+            } else {
+                print!(".");
+            }
 
-            if self.cycle as f32 / 20.0 == 1.0 ||
-            self.cycle as f32 / 60.0 == 1.0 ||
-            self.cycle as f32 / 100.0 == 1.0 ||
-            self.cycle as f32 / 140.0 == 1.0 ||
-            self.cycle as f32 / 180.0 == 1.0 ||
+            if col == 39 {
+                println!("");
+            }
 
-            self.cycle as f32 / 220.0 == 1.0
-            
-            /*
-                    || (self.cycle / 60) == 1
-                    || (self.cycle / 100) == 1
-                    || (self.cycle / 140) == 1
-                    || (self.cycle / 180) == 1
-                    || (self.cycle / 220) == 1 */
-                {
-
-                    println!(
-                        "{} * {} = Frequency {}",
-                        self.cycle,
-                        self.cpu.x,
-                        self.cycle as isize * self.cpu.x
-                    );
-                    sum_strength += self.cycle as isize * self.cpu.x;
-                    println!("Freq Sum: {}", sum_strength);
+            if self.cycle == 20
+                || self.cycle == 60
+                || self.cycle == 100
+                || self.cycle == 140
+                || self.cycle == 180
+                || self.cycle == 220
+            {
+                sum_strength += self.cycle as isize * self.cpu.x;
+                if part_1 {
+                    println!("Freq Sum: {}", sum_strength);    
                 }
+                
+            }
 
             current_instr_cost -= 1;
             if current_instr_cost == 0 {
-                println!("Executing the current instruction");
                 match current_instr {
                     CpuInstructions::AddX { value, .. } => {
                         self.cpu.x += value;
                     }
                     CpuInstructions::Noop { .. } => {}
                 }
-                
-                println!("Cpu.x={}", self.cpu.x);
+
                 match instr.next() {
                     Some(i) => {
                         current_instr = i;
@@ -85,10 +78,4 @@ fn cost(instruction: &CpuInstructions) -> usize {
         CpuInstructions::AddX { cost, .. } => cost.clone(),
         CpuInstructions::Noop { cost } => cost.clone(),
     }
-}
-
-#[test]
-fn test_math() {
-    let actual: f32 = 21 as f32 / 20 as f32;
-    // assert_eq!((21 as f32) / (20  as f32), 1);
 }

@@ -11,12 +11,8 @@ use parser::parse;
 
 fn main() -> Result<(), Error> {
     let mut cathod_ray_tube = CathodeRayTube::new();
-
     let instructions = parse("src/input.txt");
-    println!("{:?}", &instructions);
-
     cathod_ray_tube.simulate(& instructions);
-
 
     Ok(())
 }
