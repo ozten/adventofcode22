@@ -2,14 +2,14 @@ use crate::point::Point;
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Path {
-    pub value: char
+    pub value: char,
 }
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum Space {
     Element { path: Path },
     Start,
-    End
+    End,
 }
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]

@@ -2,7 +2,11 @@
 
     cargo test -- --nocapture
 
-    RUST_BACKTRACE=1 cargo run
+    # Run test_input.txt
+    TEST_MODE=true RUST_BACKTRACE=1 cargo run
+
+    # Run input.txt
+    TEST_MODE=false RUST_BACKTRACE=1 cargo run
 
 ## Day 12: Hill Climbing Algorithm
 
