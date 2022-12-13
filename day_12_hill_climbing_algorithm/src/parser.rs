@@ -49,17 +49,3 @@ pub fn parse(filename: &str) -> Grid {
         goal: goal.unwrap(),
     }
 }
-
-#[cfg(test)]
-mod test {
-
-    use std::io::Error;
-
-    use crate::parser::parse;
-
-    #[test]
-    fn test_parse() -> Result<(), Error> {
-        let instructions = parse("./src/test_input.txt");
-        Ok(())
-    }
-}

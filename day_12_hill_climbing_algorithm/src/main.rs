@@ -7,19 +7,45 @@ use grid::{Grid, Space};
 
 mod parser;
 use parser::parse;
+use point::Point;
 
 mod point;
 
-fn can_move(from: &Space, to: &Space, to_pair: (i32, i32)) -> Option<(i32, i32)> {
+fn get_as_usize(grid: &Grid, point: &Point) -> Space {
+    grid.spaces
+        .get(grid.width * point.y + point.x)
+        .unwrap()
+        .to_owned()
+}
+
+fn get_as_usize_offset_row(grid: &Grid, point: &Point, y: isize) -> Space {
+    let new_y = point.y as isize + y;
+    grid.spaces
+        .get(grid.width * (new_y as usize) + point.x)
+        .unwrap()
+        .to_owned()
+}
+
+fn get_as_usize_offset_col(grid: &Grid, point: &Point, x: isize) -> Space {
+    let new_x = point.x as isize + x;
+    grid.spaces
+        .get(grid.width * point.y + new_x as usize)
+        .unwrap()
+        .to_owned()
+}
+
+fn can_move(from: &Space, to: &Space, to_pair: &Point) -> Option<Point> {
     match from {
-        Space::Start => Some(to_pair),
+        Space::Start => Some(to_pair.to_owned()),
         // End of the road!
-        Space::Element { path } if path.value == 'z' => Some(to_pair),
+        Space::Element { path } if path.value == 'z' => Some(to_pair.to_owned()),
         Space::Element { path } => {
             let from_value = path.value as u32;
             match to {
                 // Approachable
-                Space::Element { path } if from_value + 1 >= path.value as u32 => Some(to_pair),
+                Space::Element { path } if from_value + 1 >= path.value as u32 => {
+                    Some(to_pair.to_owned())
+                }
                 // Too steep for remaining Space::Element { path }
                 _ => None,
             }
@@ -28,50 +54,73 @@ fn can_move(from: &Space, to: &Space, to_pair: (i32, i32)) -> Option<(i32, i32)>
     }
 }
 
-fn get_as_usize(grid: &Grid, x: i32, y: i32) -> Space {
-    let idx: usize = grid.width * y as usize + x as usize;
-    grid.spaces.get(idx).unwrap().to_owned()
-}
-
-fn valid_neighbors(grid: &Grid, x: i32, y: i32) -> Vec<(i32, i32)> {
+fn valid_neighbors(grid: &Grid, point: &Point) -> Vec<(Point, usize)> {
     let mut valid = Vec::new();
-    let cur = get_as_usize(grid, x, y);
+    let cur = get_as_usize(grid, point);
     // up
-    if y - 1 >= 0 {
-        let up = get_as_usize(grid, x, y - 1);
-        match can_move(&cur, &up, (x, y - 1)) {
+    if point.y >= 1 {
+        let up = get_as_usize_offset_row(grid, point, -1);
+        match can_move(
+            &cur,
+            &up,
+            &Point {
+                x: point.x,
+                y: point.y - 1,
+            },
+        ) {
             Some(pair) => valid.push(pair),
             None => {}
         }
     }
 
     // right
-    if x + 1 < grid.width as i32 {
-        let right = get_as_usize(grid, x + 1, y);
-        match can_move(&cur, &right, (x + 1, y)) {
+    if point.x + 1 < grid.width {
+        let right = get_as_usize_offset_col(grid, point, 1);
+        match can_move(
+            &cur,
+            &right,
+            &Point {
+                x: point.x + 1,
+                y: point.y,
+            },
+        ) {
             Some(pair) => valid.push(pair),
             None => {}
         }
     }
 
     // down
-    if y + 1 < grid.height as i32 {
-        let down = get_as_usize(grid, x, y + 1);
-        match can_move(&cur, &down, (x, y + 1)) {
+    if point.y + 1 < grid.height {
+        let down = get_as_usize_offset_row(grid, point, 1);
+        match can_move(
+            &cur,
+            &down,
+            &Point {
+                x: point.x,
+                y: point.y + 1,
+            },
+        ) {
             Some(pair) => valid.push(pair),
             None => {}
         }
     }
 
     // left
-    if x - 1 >= 0 {
-        let left = get_as_usize(grid, x - 1, y);
-        match can_move(&cur, &left, (x - 1, y)) {
+    if point.x >= 1 {
+        let left = get_as_usize_offset_col(grid, point, -1);
+        match can_move(
+            &cur,
+            &left,
+            &Point {
+                x: point.x - 1,
+                y: point.y,
+            },
+        ) {
             Some(pair) => valid.push(pair),
             None => {}
         }
     }
-    valid
+    valid.into_iter().map(|p| (p, 1)).collect()
 }
 
 fn main() -> Result<(), Error> {
@@ -83,42 +132,46 @@ fn main() -> Result<(), Error> {
         "src/input.txt"
     });
 
-    let goal: (i32, i32) = (grid.goal.x as i32, grid.goal.y as i32);
-    let result = dijkstra(
-        &(grid.start.x as i32, grid.start.y as i32),
-        |&(x, y)| valid_neighbors(&grid, x, y).into_iter().map(|p| (p, 1)),
-        |&p| p == goal,
+    let result: Option<(Vec<Point>, usize)> = dijkstra(
+        &grid.start,
+        |p| valid_neighbors(&grid, &p),
+        |p| *p == grid.goal,
     );
 
-    let solution: isize = read_to_string("part_1_solution")?.parse().unwrap();
+    let solution: usize = read_to_string("part_1_solution")?.parse().unwrap();
+    let answer = result.expect("No path found").1;
+
+    println!("Answer {answer}");
+
     if test_mode {
-        assert_eq!(result.expect("No path found").1, 31);
+        assert_eq!(answer, 31);
     } else {
-        assert_eq!(result.expect("No path found").1, solution);
+        assert_eq!(answer, solution);
     }
 
-    let mut possible_starts: Vec<Option<(i32, i32)>> = Vec::new();
+    // Part 2
+    let mut possible_starts: Vec<Option<Point>> = Vec::new();
 
     for y in 0..grid.height {
         for x in 0..grid.width {
             possible_starts.push(match grid.spaces.get(grid.width * y + x).unwrap() {
-                Space::Start => Some((x as i32, y as i32)),
-                Space::Element { path } if path.value == 'a' => Some((x as i32, y as i32)),
+                Space::Start => Some(Point { x, y }),
+                Space::Element { path } if path.value == 'a' => Some(Point { x, y }),
                 _ => None,
             });
         }
     }
 
-    let mut lowest = i32::MAX;
+    let mut lowest = usize::MAX;
 
     possible_starts
         .iter()
         .filter(|pos| pos.is_some())
         .for_each(|pos| {
             let result = dijkstra(
-                &pos.unwrap(),
-                |&(x, y)| valid_neighbors(&grid, x, y).into_iter().map(|p| (p, 1)),
-                |&p| p == goal,
+                pos.as_ref().unwrap(),
+                |&p| valid_neighbors(&grid, &p),
+                |&p| p == grid.goal,
             );
             match &result {
                 Some(details) => {
@@ -129,13 +182,12 @@ fn main() -> Result<(), Error> {
                 None => {}
             }
         });
-
     println!("Final answer {lowest}");
-    let solution: isize = read_to_string("part_2_solution")?.parse().unwrap();
+    let solution: usize = read_to_string("part_2_solution")?.parse().unwrap();
     if test_mode {
         assert_eq!(lowest, 29);
     } else {
-        assert_eq!(lowest, solution as i32);
+        assert_eq!(lowest, solution);
     }
 
     Ok(())
