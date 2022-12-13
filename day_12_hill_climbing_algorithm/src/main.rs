@@ -3,7 +3,7 @@ use std::{fs::read_to_string, io::Error};
 use pathfinding::dijkstra;
 
 mod grid;
-use grid::{Grid, Space};
+use grid::Space;
 
 mod parser;
 use parser::parse;
