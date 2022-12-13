@@ -11,118 +11,6 @@ use point::Point;
 
 mod point;
 
-fn get_as_usize(grid: &Grid, point: &Point) -> Space {
-    grid.spaces
-        .get(grid.width * point.y + point.x)
-        .unwrap()
-        .to_owned()
-}
-
-fn get_as_usize_offset_row(grid: &Grid, point: &Point, y: isize) -> Space {
-    let new_y = point.y as isize + y;
-    grid.spaces
-        .get(grid.width * (new_y as usize) + point.x)
-        .unwrap()
-        .to_owned()
-}
-
-fn get_as_usize_offset_col(grid: &Grid, point: &Point, x: isize) -> Space {
-    let new_x = point.x as isize + x;
-    grid.spaces
-        .get(grid.width * point.y + new_x as usize)
-        .unwrap()
-        .to_owned()
-}
-
-fn can_move(from: &Space, to: &Space, to_pair: &Point) -> Option<Point> {
-    match from {
-        Space::Start => Some(to_pair.to_owned()),
-        // End of the road!
-        Space::Element { path } if path.value == 'z' => Some(to_pair.to_owned()),
-        Space::Element { path } => {
-            let from_value = path.value as u32;
-            match to {
-                // Approachable
-                Space::Element { path } if from_value + 1 >= path.value as u32 => {
-                    Some(to_pair.to_owned())
-                }
-                // Too steep for remaining Space::Element { path }
-                _ => None,
-            }
-        }
-        _ => None,
-    }
-}
-
-fn valid_neighbors(grid: &Grid, point: &Point) -> Vec<(Point, usize)> {
-    let mut valid = Vec::new();
-    let cur = get_as_usize(grid, point);
-    // up
-    if point.y >= 1 {
-        let up = get_as_usize_offset_row(grid, point, -1);
-        match can_move(
-            &cur,
-            &up,
-            &Point {
-                x: point.x,
-                y: point.y - 1,
-            },
-        ) {
-            Some(pair) => valid.push(pair),
-            None => {}
-        }
-    }
-
-    // right
-    if point.x + 1 < grid.width {
-        let right = get_as_usize_offset_col(grid, point, 1);
-        match can_move(
-            &cur,
-            &right,
-            &Point {
-                x: point.x + 1,
-                y: point.y,
-            },
-        ) {
-            Some(pair) => valid.push(pair),
-            None => {}
-        }
-    }
-
-    // down
-    if point.y + 1 < grid.height {
-        let down = get_as_usize_offset_row(grid, point, 1);
-        match can_move(
-            &cur,
-            &down,
-            &Point {
-                x: point.x,
-                y: point.y + 1,
-            },
-        ) {
-            Some(pair) => valid.push(pair),
-            None => {}
-        }
-    }
-
-    // left
-    if point.x >= 1 {
-        let left = get_as_usize_offset_col(grid, point, -1);
-        match can_move(
-            &cur,
-            &left,
-            &Point {
-                x: point.x - 1,
-                y: point.y,
-            },
-        ) {
-            Some(pair) => valid.push(pair),
-            None => {}
-        }
-    }
-    valid.into_iter().map(|p| (p, 1)).collect()
-}
-
 fn main() -> Result<(), Error> {
     let test_mode = env!("TEST_MODE") == "true";
 
@@ -134,7 +22,7 @@ fn main() -> Result<(), Error> {
 
     let result: Option<(Vec<Point>, usize)> = dijkstra(
         &grid.start,
-        |p| valid_neighbors(&grid, &p),
+        |p| grid.valid_neighbors( &p),
         |p| *p == grid.goal,
     );
 
@@ -170,7 +58,7 @@ fn main() -> Result<(), Error> {
         .for_each(|pos| {
             let result = dijkstra(
                 pos.as_ref().unwrap(),
-                |&p| valid_neighbors(&grid, &p),
+                |&p| grid.valid_neighbors( &p),
                 |&p| p == grid.goal,
             );
             match &result {
