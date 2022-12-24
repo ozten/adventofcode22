@@ -244,6 +244,12 @@ fn main() {
                                 match (left, right) {
                                     (Formula::N(left_n), Formula::N(right_n)) => {
                                         println!("Visit {weight} {left_n} {op} {right_n} ");
+                                        if weight == "root" {
+                                            println!("Dealing with the root... {left_n} {right_n}");
+                                            // TODO: find side of the graph with humn
+                                            // find value of the other side
+                                            // make a math equasion under humn = value - under_value 
+                                        }
                                         match op {
                                             "+" => {
                                                 cache.insert(weight.clone(), Formula::N(left_n + right_n));
@@ -259,6 +265,9 @@ fn main() {
                                             },
                                             _ => panic!("Unknown operator")
                                         }
+                                        
+                                        
+                                        
                                     },
                                     _ => panic!("Expected cache to have numbers, but it did not")
                                 }
